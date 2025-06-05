@@ -1,0 +1,42 @@
+---
+- name: Create Ubuntu VM on Proxmox
+  hosts: localhost
+  gather_facts: no
+  vars:
+    # Proxmox connection details
+    api_host: "https://proxmox-server:8006"
+    api_user: "root@pam"
+    api_password: "your_password_or_api_token"
+    
+    # VM settings
+    vm_id: 101
+    vm_name: "UbuntuVM"
+    vm_cores: 2
+    vm_memory: 4096  # 4 GB
+    vm_disk_size: 20  # 20 GB
+    storage_pool: "local-lvm"  # or "local"
+    iso_path: "local:iso/ubuntu-22.04-live-server-amd64.iso"  # uploaded ISO path
+    network_bridge: "vmbr0"
+
+  tasks:
+    - name: Create Ubuntu VM
+      community.proxmox.proxmox:
+        api_host: "{{ api_host }}"
+        api_user: "{{ api_user }}"
+        api_password: "{{ api_password }}"
+        validate_certs: no
+        vmid: "{{ vm_id }}"
+        name: "{{ vm_name }}"
+        node: "proxmox-node-name"  # your node name, e.g., "pve"
+        cores: "{{ vm_cores }}"
+        memory: "{{ vm_memory }}"
+        scsihw: virtio-scsi-pci
+        ide2: "{{ iso_path }},media=cdrom"
+        sata0: "{{ storage_pool }}:{{ vm_disk_size }}"
+        ostype: l26  # Linux 2.6/3.x/4.x/5.x (kernel)
+        net0: "virtio,bridge={{ network_bridge }}"
+        boot: cd
+        bootdisk: sata0
+        ciuser: ubuntu  # cloud-init default user (optional)
+        cipassword: ubuntu  # cloud-init password (optional)
+        search
